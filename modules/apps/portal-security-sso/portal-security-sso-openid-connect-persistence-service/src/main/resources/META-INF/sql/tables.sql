@@ -9,5 +9,6 @@ create table OpenIdConnectSession (
 	authServerWellKnownURI VARCHAR(256) null,
 	clientId VARCHAR(256) null,
 	idToken VARCHAR(3999) null,
-	refreshToken VARCHAR(2000) null
+	refreshToken VARCHAR(2000) null,
+	sid VARCHAR(75) null
 );

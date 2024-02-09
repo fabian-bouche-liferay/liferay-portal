@@ -69,7 +69,7 @@ public class OpenIdConnectSessionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(23);
+		StringBundler sb = new StringBundler(25);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
@@ -93,6 +93,8 @@ public class OpenIdConnectSessionCacheModel
 		sb.append(idToken);
 		sb.append(", refreshToken=");
 		sb.append(refreshToken);
+		sb.append(", sid=");
+		sb.append(sid);
 		sb.append("}");
 
 		return sb.toString();
@@ -160,6 +162,13 @@ public class OpenIdConnectSessionCacheModel
 			openIdConnectSessionImpl.setRefreshToken(refreshToken);
 		}
 
+		if (sid == null) {
+			openIdConnectSessionImpl.setSid("");
+		}
+		else {
+			openIdConnectSessionImpl.setSid(sid);
+		}
+
 		openIdConnectSessionImpl.resetOriginalValues();
 
 		return openIdConnectSessionImpl;
@@ -181,6 +190,7 @@ public class OpenIdConnectSessionCacheModel
 		clientId = objectInput.readUTF();
 		idToken = objectInput.readUTF();
 		refreshToken = objectInput.readUTF();
+		sid = objectInput.readUTF();
 	}
 
 	@Override
@@ -230,6 +240,13 @@ public class OpenIdConnectSessionCacheModel
 		else {
 			objectOutput.writeUTF(refreshToken);
 		}
+
+		if (sid == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(sid);
+		}
 	}
 
 	public long mvccVersion;
@@ -243,5 +260,6 @@ public class OpenIdConnectSessionCacheModel
 	public String clientId;
 	public String idToken;
 	public String refreshToken;
+	public String sid;
 
 }

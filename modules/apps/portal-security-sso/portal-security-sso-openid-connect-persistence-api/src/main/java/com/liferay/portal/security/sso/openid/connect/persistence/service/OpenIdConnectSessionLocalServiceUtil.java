@@ -227,6 +227,10 @@ public class OpenIdConnectSessionLocalServiceUtil {
 			userId, authServerWellKnownURI, clientId);
 	}
 
+	public static OpenIdConnectSession fetchOpenIdConnectSession(String sid) {
+		return getService().fetchOpenIdConnectSession(sid);
+	}
+
 	public static List<OpenIdConnectSession>
 		getAccessTokenExpirationDateOpenIdConnectSessions(
 			java.util.Date ltAccessTokenExpirationDate, int start, int end) {

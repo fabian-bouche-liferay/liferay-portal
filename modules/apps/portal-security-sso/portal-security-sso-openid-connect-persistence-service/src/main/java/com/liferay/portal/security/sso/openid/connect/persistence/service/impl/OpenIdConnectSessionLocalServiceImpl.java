@@ -46,6 +46,11 @@ public class OpenIdConnectSessionLocalServiceImpl
 	}
 
 	@Override
+	public OpenIdConnectSession fetchOpenIdConnectSession(String sid) {
+		return openIdConnectSessionPersistence.fetchBySid(sid);
+	}
+
+	@Override
 	public List<OpenIdConnectSession>
 		getAccessTokenExpirationDateOpenIdConnectSessions(
 			Date ltAccessTokenExpirationDate, int start, int end) {

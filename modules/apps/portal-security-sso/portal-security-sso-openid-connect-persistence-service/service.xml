@@ -24,6 +24,7 @@
 		<column name="clientId" type="String" />
 		<column name="idToken" type="String" />
 		<column name="refreshToken" type="String" />
+		<column name="sid" type="String" />
 
 		<!-- Finder methods -->
 
@@ -43,6 +44,9 @@
 			<finder-column name="authServerWellKnownURI" />
 			<finder-column name="clientId" />
 		</finder>
+		<finder name="Sid" return-type="OpenIdConnectSession">
+			<finder-column name="sid" />
+		</finder>		
 	</entity>
 	<exceptions>
 		<exception>DuplicateOpenIdConnectSession</exception>

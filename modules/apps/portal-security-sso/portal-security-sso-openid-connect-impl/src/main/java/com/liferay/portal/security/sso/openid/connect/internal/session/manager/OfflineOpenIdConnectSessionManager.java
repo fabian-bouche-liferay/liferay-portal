@@ -37,11 +37,16 @@ import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnec
 import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectSession;
 import com.liferay.portal.security.sso.openid.connect.persistence.service.OpenIdConnectSessionLocalService;
 
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import com.nimbusds.openid.connect.sdk.rp.OIDCClientInformation;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
+
+import java.text.ParseException;
 
 import java.util.Date;
 import java.util.Dictionary;
@@ -335,8 +340,28 @@ public class OfflineOpenIdConnectSessionManager {
 		openIdConnectSession.setClientId(clientId);
 		openIdConnectSession.setIdToken(idTokenString);
 
+		_updateOpenIdConnectSession(openIdConnectSession, idTokenString);
+
 		_updateOpenIdConnectSession(
 			accessToken, openIdConnectSession, refreshToken);
+	}
+
+	private void _updateOpenIdConnectSession(
+		OpenIdConnectSession openIdConnectSession, String idTokenString) {
+
+		try {
+
+			JWT idTokenJwt = JWTParser.parse(idTokenString);
+			JWTClaimsSet idTokenClaimsSet = idTokenJwt.getJWTClaimsSet();
+			String sid = (String) idTokenClaimsSet.getClaim("sid");
+
+			openIdConnectSession.setSid(sid);
+		} catch (ParseException e) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Failed to parse id token, the sid could not be extracted. This is necessary for back channel logout", e);
+			}
+		}
+
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
