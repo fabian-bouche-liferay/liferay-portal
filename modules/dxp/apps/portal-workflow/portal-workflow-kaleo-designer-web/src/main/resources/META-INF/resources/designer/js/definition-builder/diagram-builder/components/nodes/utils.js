@@ -8,6 +8,7 @@ import {v4 as uuidv4} from 'uuid';
 import {defaultLanguageId} from '../../../constants';
 import {insertNodeAt} from '../../util/insertNodeAt';
 import AIDecisionNode from './AIDecisionNode';
+import AITaskNode from './AITaskNode';
 import ConditionNode from './ConditionNode';
 import ForkNode from './ForkNode';
 import JoinNode from './JoinNode';
@@ -41,6 +42,7 @@ const defaultNodes = [
 
 const nodeDescription = {
 	'ai-decision': Liferay.Language.get('make-a-decision-using-llm-models'),
+	'ai-task': Liferay.Language.get('trigger-an-ai-task'),
 	'condition': Liferay.Language.get('execute-conditional-logic'),
 	'end': Liferay.Language.get('conclude-the-workflow'),
 	'fork': Liferay.Language.get('split-the-workflow-into-multiple-paths'),
@@ -68,6 +70,10 @@ let nodeTypes = {
 if (Liferay.FeatureFlags['LPD-62272']) {
 	nodeTypes = insertNodeAt(nodeTypes, 'ai-decision', AIDecisionNode, 1);
 	nodeTypes = insertNodeAt(nodeTypes, 'llm', LLMNode, 6);
+}
+
+if (Liferay.FeatureFlags['LPD-79411']) {
+	nodeTypes = insertNodeAt(nodeTypes, 'ai-task', AITaskNode, 2);
 }
 
 export {defaultNodes, nodeDescription, nodeTypes};

@@ -1,3 +1,8 @@
 Bundle-Name: Liferay AI Hub REST Client
 Bundle-SymbolicName: com.liferay.ai.hub.rest.client
 Bundle-Version: 1.0.6
+
+Export-Package:\
+	com.liferay.ai.hub.rest.client.dto.v1_0,\
+	com.liferay.ai.hub.rest.client.resource.v1_0,\
+	com.liferay.ai.hub.rest.client.problem

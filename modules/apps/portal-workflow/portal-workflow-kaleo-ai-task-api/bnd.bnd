@@ -1,0 +1,7 @@
+Bundle-Name: Liferay Portal Workflow Kaleo AI Task API
+Bundle-SymbolicName: com.liferay.portal.workflow.kaleo.ai.task.api
+Bundle-Version: 1.0.0
+-dsannotations-options: inherit
+Export-Package:\
+    com.liferay.portal.workflow.kaleo.aitask,\
+    com.liferay.portal.workflow.kaleo.aitask.model

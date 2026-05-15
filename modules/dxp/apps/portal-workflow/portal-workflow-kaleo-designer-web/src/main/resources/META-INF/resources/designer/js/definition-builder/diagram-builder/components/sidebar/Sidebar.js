@@ -148,6 +148,7 @@ if (Liferay.FeatureFlags['LPD-62272']) {
 		showDeleteButton: true,
 		title: Liferay.Language.get('ai-decision'),
 	};
+
 	contents['llm'] = {
 		sections: [
 			'nodeInformation',
@@ -157,6 +158,19 @@ if (Liferay.FeatureFlags['LPD-62272']) {
 		],
 		showDeleteButton: true,
 		title: Liferay.Language.get('llm-node'),
+	};
+}
+
+if (Liferay.FeatureFlags['LPD-79411']) {
+	contents['ai-task'] = {
+		sections: [
+			'nodeInformation',
+			'aiTaskSummary',
+			'inputMappingsSummary',
+			'outputMappingsSummary',
+		],
+		showDeleteButton: true,
+		title: Liferay.Language.get('ai-task-node'),
 	};
 }
 

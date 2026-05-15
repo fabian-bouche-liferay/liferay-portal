@@ -273,9 +273,9 @@ public class Node implements Serializable {
 	@GraphQLName("Type")
 	public static enum Type {
 
-		AI_DECISION("AI_DECISION"), CONDITION("CONDITION"), FORK("FORK"),
-		INITIAL_STATE("INITIAL_STATE"), JOIN("JOIN"), JOIN_XOR("JOIN_XOR"),
-		LLM("LLM"), STATE("STATE"), TASK("TASK"),
+		AI_DECISION("AI_DECISION"), AI_TASK("AI_TASK"), CONDITION("CONDITION"),
+		FORK("FORK"), INITIAL_STATE("INITIAL_STATE"), JOIN("JOIN"),
+		JOIN_XOR("JOIN_XOR"), LLM("LLM"), STATE("STATE"), TASK("TASK"),
 		TERMINAL_STATE("TERMINAL_STATE");
 
 		@JsonCreator
@@ -400,4 +400,4 @@ public class Node implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:1465728265
+// LIFERAY-REST-BUILDER-HASH:465731139

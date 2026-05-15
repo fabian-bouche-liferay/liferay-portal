@@ -125,9 +125,9 @@ public class Node implements Cloneable, Serializable {
 
 	public static enum Type {
 
-		AI_DECISION("AI_DECISION"), CONDITION("CONDITION"), FORK("FORK"),
-		INITIAL_STATE("INITIAL_STATE"), JOIN("JOIN"), JOIN_XOR("JOIN_XOR"),
-		LLM("LLM"), STATE("STATE"), TASK("TASK"),
+		AI_DECISION("AI_DECISION"), AI_TASK("AI_TASK"), CONDITION("CONDITION"),
+		FORK("FORK"), INITIAL_STATE("INITIAL_STATE"), JOIN("JOIN"),
+		JOIN_XOR("JOIN_XOR"), LLM("LLM"), STATE("STATE"), TASK("TASK"),
 		TERMINAL_STATE("TERMINAL_STATE");
 
 		public static Type create(String value) {
@@ -160,4 +160,4 @@ public class Node implements Cloneable, Serializable {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:1975661794
+// LIFERAY-REST-BUILDER-HASH:2003594460

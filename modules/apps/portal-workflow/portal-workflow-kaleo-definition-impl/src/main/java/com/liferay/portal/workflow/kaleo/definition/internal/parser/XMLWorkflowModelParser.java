@@ -5,6 +5,8 @@
 
 package com.liferay.portal.workflow.kaleo.definition.internal.parser;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -17,6 +19,7 @@ import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.workflow.kaleo.definition.AIDecision;
+import com.liferay.portal.workflow.kaleo.definition.AITask;
 import com.liferay.portal.workflow.kaleo.definition.Action;
 import com.liferay.portal.workflow.kaleo.definition.ActionAware;
 import com.liferay.portal.workflow.kaleo.definition.AddressRecipient;
@@ -74,12 +77,18 @@ import org.osgi.service.component.annotations.Component;
 @Component(service = WorkflowModelParser.class)
 public class XMLWorkflowModelParser implements WorkflowModelParser {
 
+	private static final Log _log = LogFactoryUtil.getLog(
+			XMLWorkflowModelParser.class);
+	
 	@Override
 	public Definition parse(InputStream inputStream) throws WorkflowException {
 		try {
 			return parse(StringUtil.read(inputStream));
 		}
 		catch (Exception exception) {
+
+			_log.error("Unable to parse workflow definition", exception);
+			
 			throw new WorkflowDefinitionFileException(
 				"Unable to parse definition", exception);
 		}
@@ -94,6 +103,9 @@ public class XMLWorkflowModelParser implements WorkflowModelParser {
 			return _parse(document);
 		}
 		catch (Exception exception) {
+			
+			_log.error("Unable to parse workflow definition", exception);
+			
 			throw new WorkflowDefinitionFileException(
 				"Unable to parse definition", exception);
 		}
@@ -127,6 +139,12 @@ public class XMLWorkflowModelParser implements WorkflowModelParser {
 			definition.addNode(_parseAIDecision(aiDecisionElement));
 		}
 
+		List<Element> aiTaskElements = rootElement.elements("ai-task");
+
+		for (Element aiTaskElement : aiTaskElements) {
+			definition.addNode(_parseAITask(aiTaskElement));
+		}
+		
 		List<Element> conditionElements = rootElement.elements("condition");
 
 		for (Element conditionElement : conditionElements) {
@@ -170,9 +188,9 @@ public class XMLWorkflowModelParser implements WorkflowModelParser {
 		}
 
 		_parseTransitions(
-			definition, aiDecisionElements, conditionElements, forkElements,
-			joinElements, joinXorElements, llmElements, stateElements,
-			taskElements);
+			definition, aiDecisionElements, aiTaskElements, conditionElements,
+			forkElements, joinElements, joinXorElements, llmElements, 
+			stateElements, taskElements);
 
 		return definition;
 	}
@@ -287,6 +305,70 @@ public class XMLWorkflowModelParser implements WorkflowModelParser {
 		aiDecision.setSettings(settings);
 
 		return aiDecision;
+	}
+	
+	private AITask _parseAITask(Element aiTaskElement) {
+		AITask aiTask = new AITask(
+			StringUtil.trim(aiTaskElement.elementText("description")),
+			aiTaskElement.elementTextTrim("name"));
+
+		
+		aiTask.setLabelMap(_parseLabels(aiTaskElement.element("labels")));
+		aiTask.setMetadata(aiTaskElement.elementTextTrim("metadata"));
+
+		Set<Setting> settings = new HashSet<>();
+
+		String remoteLiferayBaseURL = aiTaskElement.elementTextTrim(
+			"remote-liferay-base-url");
+
+		if (remoteLiferayBaseURL != null) {
+			settings.add(
+				new Setting("remoteLiferayBaseURL", remoteLiferayBaseURL));
+		}
+
+		String oAuth2ClientExternalReferenceCode =
+			aiTaskElement.elementTextTrim(
+				"oauth2-client-external-reference-code");
+
+		if (oAuth2ClientExternalReferenceCode != null) {
+			settings.add(
+				new Setting(
+					"oAuth2ClientExternalReferenceCode",
+					oAuth2ClientExternalReferenceCode));
+		}
+
+		String aiTaskDefinitionExternalReferenceCode =
+			aiTaskElement.elementTextTrim(
+				"ai-task-definition-external-reference-code");
+
+		if (aiTaskDefinitionExternalReferenceCode != null) {
+			settings.add(
+				new Setting(
+					"aiTaskDefinitionExternalReferenceCode",
+					aiTaskDefinitionExternalReferenceCode));
+		}
+
+		String inputMappings = aiTaskElement.elementTextTrim("input-mappings");
+
+		if (inputMappings != null) {
+			settings.add(new Setting("inputMappings", inputMappings));
+		}
+
+		String outputMappings = aiTaskElement.elementTextTrim("output-mappings");
+
+		if (outputMappings != null) {
+			settings.add(new Setting("outputMappings", outputMappings));
+		}
+
+		String timeout = aiTaskElement.elementTextTrim("timeout");
+
+		if (timeout != null) {
+			settings.add(new Setting("timeout", timeout));
+		}
+
+		aiTask.setSettings(settings);
+
+		return aiTask;
 	}
 
 	private Set<Assignment> _parseAssignments(Element assignmentsElement)
@@ -993,15 +1075,19 @@ public class XMLWorkflowModelParser implements WorkflowModelParser {
 
 	private void _parseTransitions(
 			Definition definition, List<Element> aiDecisionElements,
-			List<Element> conditionElements, List<Element> forkElements,
-			List<Element> joinElements, List<Element> joinXorElements,
-			List<Element> llmElements, List<Element> stateElements,
-			List<Element> taskElements)
+			List<Element> aiTaskElements, List<Element> conditionElements,
+			List<Element> forkElements, List<Element> joinElements,
+			List<Element> joinXorElements, List<Element> llmElements,
+			List<Element> stateElements, List<Element> taskElements)
 		throws Exception {
 
 		for (Element aiDecisionElement : aiDecisionElements) {
 			_parseTransition(definition, aiDecisionElement);
 		}
+		
+		for (Element aiTaskElement : aiTaskElements) {
+			_parseTransition(definition, aiTaskElement);
+		}		
 
 		for (Element conditionElement : conditionElements) {
 			_parseTransition(definition, conditionElement);

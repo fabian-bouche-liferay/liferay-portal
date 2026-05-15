@@ -360,6 +360,8 @@ XMLDefinition.prototype = {
 			resultFields: [
 				'description',
 				'id',
+				'ai-task-definition-external-reference-code',
+				'input-mappings',
 				'input-variables',
 				'initial',
 				{
@@ -368,17 +370,21 @@ XMLDefinition.prototype = {
 				},
 				'metadata',
 				'name',
+				'oauth2-client-external-reference-code',
+				'output-mappings',
 				{
 					key: 'prompt',
 					locator: 'prompt',
 				},
 				'output-variables',
 				'rag',
+				'remote-liferay-base-url',
 				'script',
 				{
 					key: 'scriptLanguage',
 					locator: 'script-language',
 				},
+				'timeout',
 				{
 					key: 'transitions',
 					locator: 'transitions',

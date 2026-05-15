@@ -718,6 +718,37 @@ function serializeDefinition(xmlNamespace, metadata, nodes, transitions) {
 				XMLUtil.create('tools', cdata(jsonStringify(item.data.tools)))
 			);
 		}
+		
+		
+		if (item.type === 'ai-task') {
+		
+			buffer.push(
+				XMLUtil.create(
+					'ai-task-definition-external-reference-code',
+					cdata(item.data.aiTaskDefinitionExternalReferenceCode || '')
+				)
+			);
+		
+			buffer.push(
+				XMLUtil.create(
+					'input-mappings',
+					cdata(jsonStringify(item.data.inputMappings || []))
+				)
+			);
+		
+			buffer.push(
+				XMLUtil.create(
+					'output-mappings',
+					cdata(jsonStringify(item.data.outputMappings || []))
+				)
+			);
+		
+			if (item.data.timeout !== undefined && item.data.timeout !== null) {
+				buffer.push(
+					createTagWithEscapedContent('timeout', item.data.timeout)
+				);
+			}
+		}		
 
 		const nodeTransitions = transitions.filter(
 			(transition) => transition.source === name

@@ -155,6 +155,36 @@ DeserializeUtil.prototype = {
 
 					data.userMessage = node['user-message'] || '';
 				}
+				
+				if (type === 'ai-task') {
+					data.aiTaskDefinitionExternalReferenceCode =
+						node['ai-task-definition-external-reference-code'] || '';
+				
+					data.inputMappings = (() => {
+						try {
+							return JSON.parse(node['input-mappings']);
+						}
+						catch (error) {
+							return [];
+						}
+					})();
+				
+					data.oauth2ClientExternalReferenceCode =
+						node['oauth2-client-external-reference-code'] || '';
+				
+					data.outputMappings = (() => {
+						try {
+							return JSON.parse(node['output-mappings']);
+						}
+						catch (error) {
+							return [];
+						}
+					})();
+				
+					data.remoteLiferayBaseURL = node['remote-liferay-base-url'] || '';
+				
+					data.timeout = node.timeout ? Number(node.timeout) : undefined;
+				}				
 
 				data.actions = node.actions?.length && parseActions(node);
 

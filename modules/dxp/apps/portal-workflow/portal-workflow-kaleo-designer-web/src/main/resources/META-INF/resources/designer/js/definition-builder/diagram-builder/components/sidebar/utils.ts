@@ -53,6 +53,14 @@ export function getModalInfo(itemType: string) {
 			title: Liferay.Language.get('delete-ai-decision-node'),
 		};
 	}
+	if (itemType === 'ai-task') {
+		return {
+			message: Liferay.Language.get(
+				'are-you-sure-you-want-to-delete-the-selected-ai-task-node'
+			),
+			title: Liferay.Language.get('delete-ai-task-node'),
+		};
+	}
 	if (itemType === 'assignments') {
 		return {
 			message: Liferay.Language.get(
