@@ -25,16 +25,15 @@ import java.net.HttpURLConnection;
  */
 public class AIHubCellAccessTokenWebCacheItem implements WebCacheItem {
 
+	private static final long serialVersionUID = 1L;
+	
 	public static JSONObject get(
 		AIHubCellConfiguration aiHubCellConfiguration, long companyId) {
 
 		return (JSONObject)WebCachePoolUtil.get(
-			StringBundler.concat(
-				AIHubCellAccessTokenWebCacheItem.class.getName(),
-				StringPool.POUND, companyId, StringPool.POUND,
-				aiHubCellConfiguration.clientId(), StringPool.POUND,
-				aiHubCellConfiguration.serviceURL()),
-			new AIHubCellAccessTokenWebCacheItem(aiHubCellConfiguration));
+				_getKey(aiHubCellConfiguration, companyId),
+				new AIHubCellAccessTokenWebCacheItem(aiHubCellConfiguration));
+		
 	}
 
 	public AIHubCellAccessTokenWebCacheItem(
@@ -92,6 +91,22 @@ public class AIHubCellAccessTokenWebCacheItem implements WebCacheItem {
 	public long getRefreshTime() {
 		return _refreshTime;
 	}
+	
+	public static void remove(
+		AIHubCellConfiguration aiHubCellConfiguration, long companyId) {
+
+		WebCachePoolUtil.remove(_getKey(aiHubCellConfiguration, companyId));
+	}
+
+	private static String _getKey(
+		AIHubCellConfiguration aiHubCellConfiguration, long companyId) {
+
+		return StringBundler.concat(
+			AIHubCellAccessTokenWebCacheItem.class.getName(),
+			StringPool.POUND, companyId, StringPool.POUND,
+			aiHubCellConfiguration.clientId(), StringPool.POUND,
+			aiHubCellConfiguration.serviceURL());
+	}	
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AIHubCellAccessTokenWebCacheItem.class);

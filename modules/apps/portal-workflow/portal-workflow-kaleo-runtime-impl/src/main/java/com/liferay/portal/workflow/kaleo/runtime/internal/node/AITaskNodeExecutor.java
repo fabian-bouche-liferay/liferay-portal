@@ -34,56 +34,47 @@ public class AITaskNodeExecutor extends BaseNodeExecutor {
 		return NodeType.AI_TASK;
 	}
 
-    @Override
-    protected boolean doEnter(
-            KaleoNode currentKaleoNode, ExecutionContext executionContext)
-        throws PortalException {
+	@Override
+	protected boolean doEnter(
+			KaleoNode currentKaleoNode, ExecutionContext executionContext)
+		throws PortalException {
 
-        return true;
-    }
+		return true;
+	}
 
-    @Override
-    protected void doExecute(
-            KaleoNode currentKaleoNode, ExecutionContext executionContext,
-            List<PathElement> remainingPathElements)
-        throws PortalException {
+	@Override
+	protected void doExecute(
+			KaleoNode currentKaleoNode, ExecutionContext executionContext,
+			List<PathElement> remainingPathElements)
+		throws PortalException {
 
-        AITaskResult result = _remoteAITaskClient.execute(
-            currentKaleoNode, executionContext);
+		_remoteAITaskClient.execute(currentKaleoNode, executionContext);
+	}
 
-        executionContext.getWorkflowContext(
-        ).put("aiTaskResult", result);
+	@Override
+	protected void doExit(
+			KaleoNode currentKaleoNode, ExecutionContext executionContext,
+			List<PathElement> remainingPathElements)
+		throws PortalException {
 
-        executionContext.setTransitionName(result.getTransitionName());
-    }
+		KaleoTransition kaleoTransition = null;
 
-    @Override
-    protected void doExit(
-            KaleoNode currentKaleoNode, ExecutionContext executionContext,
-            List<PathElement> remainingPathElements)
-        throws PortalException {
+		if (Validator.isNull(executionContext.getTransitionName())) {
+			kaleoTransition = currentKaleoNode.getDefaultKaleoTransition();
+		}
+		else {
+			kaleoTransition = currentKaleoNode.getKaleoTransition(
+				executionContext.getTransitionName());
+		}
 
-        String transitionName = executionContext.getTransitionName();
-
-        KaleoTransition kaleoTransition;
-
-        if (Validator.isNull(transitionName)) {
-            kaleoTransition = currentKaleoNode.getDefaultKaleoTransition();
-        }
-        else {
-            kaleoTransition = currentKaleoNode.getKaleoTransition(
-                transitionName);
-        }
-
-        remainingPathElements.add(
-            new PathElement(
-                null, kaleoTransition.getTargetKaleoNode(),
-                new ExecutionContext(
-                    executionContext.getKaleoInstanceToken(),
-                    executionContext.getKaleoTaskInstanceToken(),
-                    executionContext.getWorkflowContext(),
-                    executionContext.getServiceContext())));
-    }
+		remainingPathElements.add(
+			new PathElement(
+				null, kaleoTransition.getTargetKaleoNode(),
+				new ExecutionContext(
+					executionContext.getKaleoInstanceToken(),
+					executionContext.getWorkflowContext(),
+					executionContext.getServiceContext())));
+	}
 
     @Reference
     private RemoteAITaskClient _remoteAITaskClient;

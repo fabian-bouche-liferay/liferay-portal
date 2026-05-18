@@ -15,6 +15,6 @@ import com.liferay.portal.workflow.kaleo.runtime.ExecutionContext;
  */
 public interface RemoteAITaskClient {
     
-    public AITaskResult execute(KaleoNode currentKaleoNode, ExecutionContext executionContext) throws PortalException;
+    public void execute(KaleoNode currentKaleoNode, ExecutionContext executionContext) throws PortalException;
 
 }

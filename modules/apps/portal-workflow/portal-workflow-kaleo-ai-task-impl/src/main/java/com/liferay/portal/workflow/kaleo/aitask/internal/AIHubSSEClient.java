@@ -22,7 +22,6 @@ import java.net.http.HttpResponse;
 
 import java.nio.charset.StandardCharsets;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -36,13 +35,19 @@ import org.osgi.service.component.annotations.Reference;
 @Component(service = AIHubSSEClient.class)
 public class AIHubSSEClient {
 
-	public CompletableFuture<AITaskResult> subscribe(
-			String serviceURL, String accessToken, String userToken,
-			String sseEventSinkKey)
+	public AIHubSSESubscription subscribe(
+			String serviceURL, String accessToken, String userToken)
 		throws Exception {
 
-		CompletableFuture<AITaskResult> completableFuture =
-			new CompletableFuture<>();
+		AIHubSSESubscription aiHubSSESubscription =
+			new AIHubSSESubscription();
+
+		URI uri = URI.create(
+			serviceURL + "/o/ai-hub/v1.0/agent-instances/subscribe");
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("Subscribing to AI Hub SSE: " + uri);
+		}
 
 		HttpRequest httpRequest = HttpRequest.newBuilder(
 		).GET(
@@ -53,15 +58,13 @@ public class AIHubSSEClient {
 		).header(
 			"liferay-ai-hub-cell-on-behalf-of", userToken
 		).uri(
-			URI.create(
-				serviceURL + "/o/ai-hub/v1.0/agent-instances/subscribe")
+			uri
 		).build();
 
 		_executorService.submit(
-			() -> _subscribe(
-				completableFuture, httpRequest, sseEventSinkKey));
+			() -> _subscribe(aiHubSSESubscription, httpRequest));
 
-		return completableFuture;
+		return aiHubSSESubscription;
 	}
 
 	@Deactivate
@@ -70,15 +73,33 @@ public class AIHubSSEClient {
 	}
 
 	private void _subscribe(
-		CompletableFuture<AITaskResult> completableFuture,
-		HttpRequest httpRequest, String sseEventSinkKey) {
+		AIHubSSESubscription aiHubSSESubscription,
+		HttpRequest httpRequest) {
 
 		try {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Sending AI Hub SSE subscribe request");
+				_log.debug("AI Hub SSE request URI: " + httpRequest.uri());
+				_log.debug(
+					"AI Hub SSE request headers: " +
+						httpRequest.headers().map());
+			}
+
 			HttpResponse<InputStream> httpResponse = _httpClient.send(
 				httpRequest, HttpResponse.BodyHandlers.ofInputStream());
 
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"AI Hub SSE response status: " +
+						httpResponse.statusCode());
+				_log.debug(
+					"AI Hub SSE response headers: " +
+						httpResponse.headers().map());
+			}
+
 			if (httpResponse.statusCode() >= 400) {
-				completableFuture.completeExceptionally(
+				_completeExceptionally(
+					aiHubSSESubscription,
 					new IllegalStateException(
 						"Unable to subscribe to AI Hub SSE: HTTP " +
 							httpResponse.statusCode()));
@@ -86,19 +107,19 @@ public class AIHubSSEClient {
 				return;
 			}
 
-			_readEventStream(
-				httpResponse.body(), sseEventSinkKey, completableFuture);
+			_readEventStream(httpResponse.body(), aiHubSSESubscription);
 		}
 		catch (Exception exception) {
-			if (!completableFuture.isDone()) {
-				completableFuture.completeExceptionally(exception);
+			if (_log.isDebugEnabled()) {
+				_log.debug("Unable to subscribe to AI Hub SSE", exception);
 			}
+
+			_completeExceptionally(aiHubSSESubscription, exception);
 		}
 	}
 
 	private void _readEventStream(
-			InputStream inputStream, String sseEventSinkKey,
-			CompletableFuture<AITaskResult> completableFuture)
+			InputStream inputStream, AIHubSSESubscription aiHubSSESubscription)
 		throws Exception {
 
 		try (BufferedReader bufferedReader = new BufferedReader(
@@ -106,19 +127,45 @@ public class AIHubSSEClient {
 
 			StringBuilder dataStringBuilder = new StringBuilder();
 
+			String event = null;
+
 			String line;
 
-			while (!completableFuture.isDone() &&
+			while (!aiHubSSESubscription.getResultCompletableFuture(
+				).isDone() &&
 				   ((line = bufferedReader.readLine()) != null)) {
+
+				if (_log.isDebugEnabled()) {
+					_log.debug("AI Hub SSE raw line: " + line);
+				}
 
 				if (line.isBlank()) {
 					if (dataStringBuilder.length() > 0) {
-						_handleData(
-							dataStringBuilder.toString(), sseEventSinkKey,
-							completableFuture);
+						String data = dataStringBuilder.toString();
+
+						if (_log.isDebugEnabled()) {
+							_log.debug("AI Hub SSE event: " + event);
+							_log.debug("AI Hub SSE data: " + data);
+						}
+
+						if ("Subscribe".equals(event)) {
+							_handleSubscribeEvent(
+								data, aiHubSSESubscription);
+						}
+						else {
+							_handleData(data, aiHubSSESubscription);
+						}
 
 						dataStringBuilder.setLength(0);
 					}
+
+					event = null;
+
+					continue;
+				}
+
+				if (line.startsWith("event:")) {
+					event = line.substring("event:".length()).trim();
 
 					continue;
 				}
@@ -132,31 +179,62 @@ public class AIHubSSEClient {
 						line.substring("data:".length()).trim());
 				}
 			}
+
+			if (!aiHubSSESubscription.getResultCompletableFuture().isDone()) {
+				aiHubSSESubscription.getResultCompletableFuture(
+				).completeExceptionally(
+					new IllegalStateException(
+						"AI Hub SSE stream ended before receiving result"));
+			}
 		}
 	}
 
+	private void _handleSubscribeEvent(
+		String data, AIHubSSESubscription aiHubSSESubscription) {
+
+		String sseEventSinkKey = data.trim();
+
+		if (_log.isDebugEnabled()) {
+			_log.debug(
+				"AI Hub SSE subscribed sink key: " + sseEventSinkKey);
+		}
+
+		aiHubSSESubscription.getSseEventSinkKeyCompletableFuture(
+		).complete(
+			sseEventSinkKey);
+	}
+
 	private void _handleData(
-		String data, String sseEventSinkKey,
-		CompletableFuture<AITaskResult> completableFuture) {
+		String data, AIHubSSESubscription aiHubSSESubscription) {
+
+		data = data.trim();
+
+		if (!data.startsWith("{")) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Ignoring non-JSON AI Hub SSE data: " + data);
+			}
+
+			return;
+		}
 
 		try {
 			JSONObject jsonObject = _jsonFactory.createJSONObject(data);
 
-			if (!sseEventSinkKey.equals(
-					jsonObject.getString("sseEventSinkKey"))) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("AI Hub SSE JSON payload: " + jsonObject);
+			}
+
+			if (jsonObject.has("error")) {
+				aiHubSSESubscription.getResultCompletableFuture(
+				).completeExceptionally(
+					new IllegalStateException(data));
 
 				return;
 			}
 
-			String status = jsonObject.getString("status");
-
-			if ("completed".equals(status) || jsonObject.has("output")) {
-				completableFuture.complete(_toAITaskResult(jsonObject));
-			}
-			else if ("failed".equals(status) || jsonObject.has("error")) {
-				completableFuture.completeExceptionally(
-					new IllegalStateException(data));
-			}
+			aiHubSSESubscription.getResultCompletableFuture(
+			).complete(
+				_toAITaskResult(jsonObject));
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -166,6 +244,24 @@ public class AIHubSSEClient {
 		}
 	}
 
+	private void _completeExceptionally(
+		AIHubSSESubscription aiHubSSESubscription, Exception exception) {
+
+		if (!aiHubSSESubscription.getSseEventSinkKeyCompletableFuture(
+			).isDone()) {
+
+			aiHubSSESubscription.getSseEventSinkKeyCompletableFuture(
+			).completeExceptionally(
+				exception);
+		}
+
+		if (!aiHubSSESubscription.getResultCompletableFuture().isDone()) {
+			aiHubSSESubscription.getResultCompletableFuture(
+			).completeExceptionally(
+				exception);
+		}
+	}
+	
 	private AITaskResult _toAITaskResult(JSONObject jsonObject) {
 		AITaskResult aiTaskResult = new AITaskResult();
 
@@ -177,7 +273,7 @@ public class AIHubSSEClient {
 		}
 
 		return aiTaskResult;
-	}
+	}	
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AIHubSSEClient.class);

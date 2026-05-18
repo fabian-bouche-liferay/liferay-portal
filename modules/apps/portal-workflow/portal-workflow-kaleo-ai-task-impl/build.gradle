@@ -6,7 +6,7 @@ dependencies {
 	compileOnly group: "org.osgi", name: "org.osgi.service.component", version: "1.4.0"
 	compileOnly group: "org.osgi", name: "org.osgi.service.component.annotations", version: "1.4.0"
 	compileOnly group: "org.osgi", name: "osgi.core", version: "6.0.0"
-	compileOnly project(":apps:ai-hub-cell:ai-hub-cell-rest-client")
+	compileOnly project(":apps:ai-hub-cell:ai-hub-cell-rest-api")
 	compileOnly project(":apps:portal-configuration:portal-configuration-module-configuration-api")
 	compileOnly project(":apps:portal-vulcan:portal-vulcan-api")
 	compileOnly project(":apps:portal-workflow:portal-workflow-api")

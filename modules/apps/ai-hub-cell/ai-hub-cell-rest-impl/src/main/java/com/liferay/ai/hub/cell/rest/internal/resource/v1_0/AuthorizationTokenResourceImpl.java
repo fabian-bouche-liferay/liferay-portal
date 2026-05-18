@@ -13,6 +13,11 @@ import com.liferay.ai.hub.cell.rest.resource.v1_0.AuthorizationTokenResource;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.util.Time;
+
+import com.nimbusds.jwt.SignedJWT;
+
+import java.util.Date;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -41,17 +46,35 @@ public class AuthorizationTokenResourceImpl
 				AIHubCellConfiguration.class, contextCompany.getCompanyId());
 
 		JSONObject jsonObject = AIHubCellAccessTokenWebCacheItem.get(
-			aiHubCellConfiguration, contextCompany.getCompanyId());
+				aiHubCellConfiguration, contextCompany.getCompanyId());
+
+		if (_isExpired(jsonObject.getString("access_token"))) {
+			AIHubCellAccessTokenWebCacheItem.remove(
+				aiHubCellConfiguration, contextCompany.getCompanyId());
+
+			jsonObject = AIHubCellAccessTokenWebCacheItem.get(
+				aiHubCellConfiguration, contextCompany.getCompanyId());
+		}
+
+		JSONObject finalJSONObject = jsonObject;
 
 		return new AuthorizationToken() {
 			{
-				setAccessToken(() -> jsonObject.getString("access_token"));
-				setScope(() -> jsonObject.getString("scope"));
+				setAccessToken(() -> finalJSONObject.getString("access_token"));
+				setScope(() -> finalJSONObject.getString("scope"));
 				setServiceURL(aiHubCellConfiguration::serviceURL);
 				setUserToken(JWTTokenUtil::generateToken);
 			}
 		};
 	}
+	
+	private boolean _isExpired(String accessToken) throws Exception {
+		SignedJWT signedJWT = SignedJWT.parse(accessToken);
+
+		Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+
+		return expirationTime.before(new Date(System.currentTimeMillis() + Time.MINUTE));
+	}	
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
