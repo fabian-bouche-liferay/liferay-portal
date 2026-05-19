@@ -157,6 +157,7 @@ DeserializeUtil.prototype = {
 				}
 				
 				if (type === 'ai-task') {
+				
 					data.aiTaskDefinitionExternalReferenceCode =
 						node['ai-task-definition-external-reference-code'] || '';
 				

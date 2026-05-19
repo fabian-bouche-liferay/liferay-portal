@@ -724,6 +724,22 @@ function serializeDefinition(xmlNamespace, metadata, nodes, transitions) {
 		
 			buffer.push(
 				XMLUtil.create(
+					'remote-liferay-base-url',
+					cdata(item.data.remoteLiferayBaseURL || '')
+				)
+			);
+		
+			buffer.push(
+				XMLUtil.create(
+					'oauth2-client-external-reference-code',
+					cdata(
+						item.data.oauth2ClientExternalReferenceCode || ''
+					)
+				)
+			);
+		
+			buffer.push(
+				XMLUtil.create(
 					'ai-task-definition-external-reference-code',
 					cdata(item.data.aiTaskDefinitionExternalReferenceCode || '')
 				)
@@ -748,7 +764,7 @@ function serializeDefinition(xmlNamespace, metadata, nodes, transitions) {
 					createTagWithEscapedContent('timeout', item.data.timeout)
 				);
 			}
-		}		
+		}	
 
 		const nodeTransitions = transitions.filter(
 			(transition) => transition.source === name
