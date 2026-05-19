@@ -101,6 +101,14 @@ export function getModalInfo(itemType: string) {
 			title: Liferay.Language.get('delete-join-node'),
 		};
 	}
+	if (itemType === 'http-call') {
+		return {
+			message: Liferay.Language.get(
+				'are-you-sure-you-want-to-delete-the-selected-http-call-node'
+			),
+			title: Liferay.Language.get('delete-http-call-node'),
+		};
+	}	
 	if (itemType === 'join-xor') {
 		return {
 			message: Liferay.Language.get(

@@ -19,6 +19,7 @@ dependencies {
 	compileOnly project(":apps:portal-workflow:portal-workflow-kaleo-ai-task-api")
 	compileOnly project(":apps:portal-workflow:portal-workflow-kaleo-api")
 	compileOnly project(":apps:portal-workflow:portal-workflow-kaleo-definition-api")
+	compileOnly project(":apps:portal-workflow:portal-workflow-kaleo-http-call-api")
 	compileOnly project(":apps:portal-workflow:portal-workflow-kaleo-runtime-api")
 	compileOnly project(":apps:portal:portal-aop-api")
 	compileOnly project(":apps:portal:portal-catapult-api")

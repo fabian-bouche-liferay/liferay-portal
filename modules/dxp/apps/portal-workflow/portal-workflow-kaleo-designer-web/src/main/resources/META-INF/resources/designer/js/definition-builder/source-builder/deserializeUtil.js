@@ -187,6 +187,37 @@ DeserializeUtil.prototype = {
 					data.timeout = node.timeout ? Number(node.timeout) : undefined;
 				}				
 
+				if (type === 'http-call') {
+				
+					data.inputMappings = (() => {
+						try {
+							return JSON.parse(node['input-mappings']);
+						}
+						catch (error) {
+							return [];
+						}
+					})();
+				
+					data.outputMappings = (() => {
+						try {
+							return JSON.parse(node['output-mappings']);
+						}
+						catch (error) {
+							return [];
+						}
+					})();
+				
+					data.baseURL = node['base-url'] || '';
+
+					data.urlQuery = node['url-query'] || '';
+
+					data.httpBody = node['http-body'] || '';
+
+					data.httpMethod = node['http-method'] || '';
+				
+					data.timeout = node.timeout ? Number(node.timeout) : undefined;
+				}				
+
 				data.actions = node.actions?.length && parseActions(node);
 
 				data.notifications =

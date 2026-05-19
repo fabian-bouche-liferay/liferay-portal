@@ -30,6 +30,7 @@ import com.liferay.portal.workflow.kaleo.definition.Definition;
 import com.liferay.portal.workflow.kaleo.definition.DelayDuration;
 import com.liferay.portal.workflow.kaleo.definition.DurationScale;
 import com.liferay.portal.workflow.kaleo.definition.Fork;
+import com.liferay.portal.workflow.kaleo.definition.HTTPCall;
 import com.liferay.portal.workflow.kaleo.definition.Join;
 import com.liferay.portal.workflow.kaleo.definition.JoinXor;
 import com.liferay.portal.workflow.kaleo.definition.LLM;
@@ -157,6 +158,12 @@ public class XMLWorkflowModelParser implements WorkflowModelParser {
 			definition.addNode(_parseFork(forkElement));
 		}
 
+		List<Element> httpCallElements = rootElement.elements("http-call");
+
+		for (Element httpCallElement : httpCallElements) {
+			definition.addNode(_parseHTTPCall(httpCallElement));
+		}
+
 		List<Element> joinElements = rootElement.elements("join");
 
 		for (Element joinElement : joinElements) {
@@ -189,8 +196,8 @@ public class XMLWorkflowModelParser implements WorkflowModelParser {
 
 		_parseTransitions(
 			definition, aiDecisionElements, aiTaskElements, conditionElements,
-			forkElements, joinElements, joinXorElements, llmElements, 
-			stateElements, taskElements);
+			forkElements, httpCallElements, joinElements, joinXorElements,
+			llmElements, stateElements, taskElements);
 
 		return definition;
 	}
@@ -371,6 +378,72 @@ public class XMLWorkflowModelParser implements WorkflowModelParser {
 		return aiTask;
 	}
 
+	private HTTPCall _parseHTTPCall(Element httpCallElement) {
+
+		HTTPCall httpCall = new HTTPCall(
+			StringUtil.trim(httpCallElement.elementText("description")),
+			httpCallElement.elementTextTrim("name"));
+		
+		httpCall.setLabelMap(_parseLabels(httpCallElement.element("labels")));
+		httpCall.setMetadata(httpCallElement.elementTextTrim("metadata"));
+
+		Set<Setting> settings = new HashSet<>();
+
+		String baseURL = httpCallElement.elementTextTrim(
+			"base-url");
+
+		if (baseURL != null) {
+			settings.add(
+				new Setting("baseURL", baseURL));
+		}
+		
+		String urlQuery = httpCallElement.elementTextTrim(
+				"url-query");
+
+		if (baseURL != null) {
+			settings.add(
+				new Setting("urlQuery", urlQuery));
+		}		
+
+		String httpBody = httpCallElement.elementTextTrim(
+				"http-body");
+
+		if (httpBody != null) {
+			settings.add(
+				new Setting("httpBody", httpBody));
+		}					
+
+		String httpMethod = httpCallElement.elementTextTrim(
+				"http-method");
+
+		if (httpMethod != null) {
+			settings.add(
+				new Setting("httpMethod", httpMethod));
+		}					
+
+		String inputMappings = httpCallElement.elementTextTrim("input-mappings");
+
+		if (inputMappings != null) {
+			settings.add(new Setting("inputMappings", inputMappings));
+		}
+
+		String outputMappings = httpCallElement.elementTextTrim("output-mappings");
+
+		if (outputMappings != null) {
+			settings.add(new Setting("outputMappings", outputMappings));
+		}
+
+		String timeout = httpCallElement.elementTextTrim("timeout");
+
+		if (timeout != null) {
+			settings.add(new Setting("timeout", timeout));
+		}
+
+		httpCall.setSettings(settings);
+
+		return httpCall;
+	}
+	
 	private Set<Assignment> _parseAssignments(Element assignmentsElement)
 		throws Exception {
 
@@ -1076,9 +1149,10 @@ public class XMLWorkflowModelParser implements WorkflowModelParser {
 	private void _parseTransitions(
 			Definition definition, List<Element> aiDecisionElements,
 			List<Element> aiTaskElements, List<Element> conditionElements,
-			List<Element> forkElements, List<Element> joinElements,
-			List<Element> joinXorElements, List<Element> llmElements,
-			List<Element> stateElements, List<Element> taskElements)
+			List<Element> forkElements, List<Element> httpCallElements,
+			List<Element> joinElements, List<Element> joinXorElements,
+			List<Element> llmElements, List<Element> stateElements,
+			List<Element> taskElements)
 		throws Exception {
 
 		for (Element aiDecisionElement : aiDecisionElements) {
@@ -1095,6 +1169,10 @@ public class XMLWorkflowModelParser implements WorkflowModelParser {
 
 		for (Element forkElement : forkElements) {
 			_parseTransition(definition, forkElement);
+		}
+
+		for (Element httpCallElement : httpCallElements) {
+			_parseTransition(definition, httpCallElement);
 		}
 
 		for (Element joinElement : joinElements) {

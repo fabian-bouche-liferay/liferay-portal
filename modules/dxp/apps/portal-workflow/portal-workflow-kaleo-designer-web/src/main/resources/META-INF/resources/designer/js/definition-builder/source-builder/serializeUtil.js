@@ -766,6 +766,57 @@ function serializeDefinition(xmlNamespace, metadata, nodes, transitions) {
 			}
 		}	
 
+		if (item.type === 'http-call') {
+		
+			buffer.push(
+				XMLUtil.create(
+					'base-url',
+					cdata(item.data.baseURL || '')
+				)
+			);
+
+			buffer.push(
+				XMLUtil.create(
+					'url-query',
+					cdata(item.data.urlQuery || '')
+				)
+			);
+
+			buffer.push(
+				XMLUtil.create(
+					'http-body',
+					cdata(item.data.httpBody || '')
+				)
+			);
+
+			buffer.push(
+				XMLUtil.create(
+					'http-method',
+					cdata(item.data.httpMethod || '')
+				)
+			);
+		
+			buffer.push(
+				XMLUtil.create(
+					'input-mappings',
+					cdata(jsonStringify(item.data.inputMappings || []))
+				)
+			);
+		
+			buffer.push(
+				XMLUtil.create(
+					'output-mappings',
+					cdata(jsonStringify(item.data.outputMappings || []))
+				)
+			);
+		
+			if (item.data.timeout !== undefined && item.data.timeout !== null) {
+				buffer.push(
+					createTagWithEscapedContent('timeout', item.data.timeout)
+				);
+			}
+		}	
+
 		const nodeTransitions = transitions.filter(
 			(transition) => transition.source === name
 		);

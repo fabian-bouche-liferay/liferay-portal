@@ -11,6 +11,7 @@ import AIDecisionNode from './AIDecisionNode';
 import AITaskNode from './AITaskNode';
 import ConditionNode from './ConditionNode';
 import ForkNode from './ForkNode';
+import HTTPCallNode from './HTTPCallNode';
 import JoinNode from './JoinNode';
 import JoinXorNode from './JoinXorNode';
 import LLMNode from './LLMNode';
@@ -46,6 +47,7 @@ const nodeDescription = {
 	'condition': Liferay.Language.get('execute-conditional-logic'),
 	'end': Liferay.Language.get('conclude-the-workflow'),
 	'fork': Liferay.Language.get('split-the-workflow-into-multiple-paths'),
+	'http-call': Liferay.Language.get('trigger-an-http-call'),
 	'join': Liferay.Language.get('all-interactions-need-to-be-closed'),
 	'join-xor': Liferay.Language.get('only-one-interaction-needs-to-be-closed'),
 	'llm': Liferay.Language.get(
@@ -74,6 +76,10 @@ if (Liferay.FeatureFlags['LPD-62272']) {
 
 if (Liferay.FeatureFlags['LPD-79411']) {
 	nodeTypes = insertNodeAt(nodeTypes, 'ai-task', AITaskNode, 2);
+}
+
+if (Liferay.FeatureFlags['LPD-90977']) {
+	nodeTypes = insertNodeAt(nodeTypes, 'http-call', HTTPCallNode, 2);
 }
 
 export {defaultNodes, nodeDescription, nodeTypes};

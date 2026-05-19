@@ -174,6 +174,17 @@ if (Liferay.FeatureFlags['LPD-79411']) {
 	};
 }
 
+if (Liferay.FeatureFlags['LPD-90977']) {
+	contents['http-call'] = {
+		sections: [
+			'nodeInformation',
+			'httpCallSummary'
+		],
+		showDeleteButton: true,
+		title: Liferay.Language.get('http-call-node'),
+	};
+}
+
 const errorsDefaultValues = {
 	id: false,
 	label: false,

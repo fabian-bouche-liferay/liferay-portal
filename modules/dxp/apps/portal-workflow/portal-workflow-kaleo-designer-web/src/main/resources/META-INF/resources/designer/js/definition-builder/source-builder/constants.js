@@ -36,6 +36,10 @@ if (Liferay.FeatureFlags['LPD-79411'] === true) {
 	COL_TYPES_FIELD.splice(1, 0, 'ai-task');
 }
 
+if (Liferay.FeatureFlags['LPD-90977'] === true) {
+	COL_TYPES_FIELD.splice(1, 0, 'http-call');
+}
+
 const DEFAULT_LANGUAGE = 'groovy';
 const STR_BLANK = '';
 const STR_CDATA_CLOSE = ']]>';

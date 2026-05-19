@@ -5,6 +5,7 @@ import ActionsSummary from './actions/ActionsSummary';
 import AITaskSummary from './ai-task/AITaskSummary';
 import Assignments from './assignments/Assignments';
 import AssignmentsSummary from './assignments/AssignmentsSummary';
+import HTTPCallSummary from './http-call/HTTPCallSummary';
 import InputMappingsSummary from './ai-task/InputMappingsSummary';
 import Notifications from './notifications/Notifications';
 import NotificationsSummary from './notifications/NotificationsSummary';
@@ -24,6 +25,7 @@ const sectionComponents = {
 	assignments: Assignments,
 	assignmentsSummary: AssignmentsSummary,
 	edgeInformation: EdgeInformation,
+	httpCallSummary: HTTPCallSummary,
 	inputMappingsSummary: InputMappingsSummary,
 	nodeInformation: NodeInformation,
 	notifications: Notifications,

@@ -127,8 +127,8 @@ public class Node implements Cloneable, Serializable {
 
 		AI_DECISION("AI_DECISION"), AI_TASK("AI_TASK"), CONDITION("CONDITION"),
 		FORK("FORK"), INITIAL_STATE("INITIAL_STATE"), JOIN("JOIN"),
-		JOIN_XOR("JOIN_XOR"), LLM("LLM"), STATE("STATE"), TASK("TASK"),
-		TERMINAL_STATE("TERMINAL_STATE");
+		JOIN_XOR("JOIN_XOR"), HTTP_CALL("HTTP_CALL"), LLM("LLM"),
+		STATE("STATE"), TASK("TASK"), TERMINAL_STATE("TERMINAL_STATE");
 
 		public static Type create(String value) {
 			for (Type type : values()) {
@@ -160,4 +160,4 @@ public class Node implements Cloneable, Serializable {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:2003594460
+// LIFERAY-REST-BUILDER-HASH:-937686910

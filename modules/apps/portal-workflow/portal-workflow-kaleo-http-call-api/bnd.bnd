@@ -1,0 +1,6 @@
+Bundle-Name: Liferay Portal Workflow Kaleo HTTP Call API
+Bundle-SymbolicName: com.liferay.portal.workflow.kaleo.httpcall.api
+Bundle-Version: 1.0.0
+-dsannotations-options: inherit
+Export-Package:\
+    com.liferay.portal.workflow.kaleo.httpcall

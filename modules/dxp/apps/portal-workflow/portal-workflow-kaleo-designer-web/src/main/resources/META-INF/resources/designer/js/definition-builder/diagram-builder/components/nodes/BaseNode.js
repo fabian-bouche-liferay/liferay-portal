@@ -22,12 +22,15 @@ export default function BaseNode({
 	actions,
 	aiTaskDefinitionExternalReferenceCode,
 	assignments,
+	baseURL,
 	className,
 	description,
 	descriptionSidebar,
 	dragHandle,
 	icon,
 	id,
+	httpBody,
+	httpMethod,
 	inputMappings,
 	inputVariables,
 	isConnectable,
@@ -50,6 +53,7 @@ export default function BaseNode({
 	timeout,
 	tools,
 	type,
+	urlQuery,
 	userMessage,
 	xPos,
 	yPos,
@@ -140,14 +144,56 @@ export default function BaseNode({
 			}
 		}
 	};
+	
+	useEffect(() => {
+		if (!newNode) {
+			return;
+		}
+	
+		setSelectedItem({
+			data: {
+				actions,
+				aiTaskDefinitionExternalReferenceCode,
+				assignments,
+				baseURL,
+				description,
+				httpBody,
+				httpMethod,
+				inputMappings,
+				inputVariables,
+				label,
+				newNode: false,
+				notifications,
+				oauth2ClientExternalReferenceCode,
+				outputMappings,
+				outputVariables,
+				prompt,
+				rag,
+				remoteLiferayBaseURL,
+				script,
+				scriptLanguage,
+				taskTimers,
+				timeout,
+				tools,
+				urlQuery,
+				userMessage,
+			},
+			id,
+			type,
+		});
+	}, [newNode]);	
 
+/*
 	if (newNode) {
 		setSelectedItem({
 			data: {
 				actions,
 				aiTaskDefinitionExternalReferenceCode,
 				assignments,
+				baseURL,
 				description,
+				httpBody,
+				httpMethod,
 				inputMappings,
 				inputVariables,
 				label,
@@ -163,12 +209,14 @@ export default function BaseNode({
 				taskTimers,
 				timeout,
 				tools,
+				urlQuery,
 				userMessage,
 			},
 			id,
 			type,
 		});
 	}
+*/
 
 	return (
 		<div className={`base-node ${className}`}>
@@ -226,7 +274,10 @@ export default function BaseNode({
 								actions,
 								aiTaskDefinitionExternalReferenceCode,
 								assignments,
+								baseURL,
 								description,
+								httpBody,
+								httpMethod,
 								inputMappings,
 								inputVariables,
 								label,
@@ -242,6 +293,7 @@ export default function BaseNode({
 								taskTimers,
 								timeout,
 								tools,
+								urlQuery,
 								userMessage,
 							},
 							id,
