@@ -283,6 +283,25 @@
 			</xs:complexContent>
 		</xs:complexType>
 	</xs:element>
+	<xs:element name="http-call">
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="abstract-workflow-node-complex-type">
+					<xs:sequence>
+						<xs:element minOccurs="0" ref="labels" />
+						<xs:element minOccurs="0" name="base-url" type="xs:string" />
+						<xs:element minOccurs="0" name="url-query" type="xs:string" />
+						<xs:element minOccurs="0" name="http-body" type="xs:string" />
+						<xs:element minOccurs="0" name="http-method" type="xs:string" />
+						<xs:element minOccurs="0" name="input-mappings" type="xs:string" />
+						<xs:element minOccurs="0" name="output-mappings" type="xs:string" />
+						<xs:element minOccurs="0" name="timeout" type="xs:int" />
+						<xs:element minOccurs="0" ref="transitions" />
+					</xs:sequence>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>		
 	<xs:element name="labels">
 		<xs:complexType>
 			<xs:sequence>
@@ -447,6 +466,7 @@
 			<xs:element ref="ai-task" />
 			<xs:element ref="condition" />
 			<xs:element ref="fork" />
+			<xs:element ref="http-call" />
 			<xs:element ref="join" />
 			<xs:element ref="join-xor" />
 			<xs:element ref="llm" />
