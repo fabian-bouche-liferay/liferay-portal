@@ -7,6 +7,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.security.auth.CompanyInheritableThreadLocalCallable;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
+import com.liferay.portal.kernel.servlet.HttpMethods;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
 import com.liferay.portal.workflow.kaleo.httpcall.HTTPCallClient;
 import com.liferay.portal.workflow.kaleo.httpcall.internal.model.HTTPCallSettings;
@@ -17,10 +18,13 @@ import com.liferay.portal.workflow.kaleo.runtime.ExecutionContext;
 import com.liferay.portal.workflow.kaleo.service.KaleoInstanceTokenLocalService;
 
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -71,16 +75,40 @@ public class HTTPCallClientImpl implements HTTPCallClient {
 		}
 	}
 	
+	private String _escapeJson(String value) {
+		return value
+			.replace("\\", "\\\\")
+			.replace("\"", "\\\"")
+			.replace("\n", "\\n")
+			.replace("\r", "\\r")
+			.replace("\t", "\\t");
+	}
+	
 	private void _executeAfterCommit(
 			KaleoNode currentKaleoNode, ExecutionContext executionContext)
 		throws Exception {
 
 		HTTPCallSettings httpCallSettings =
 			_httpCallSettingsResolver.resolve(currentKaleoNode);
-		
-		URI uri = URI.create(
-				httpCallSettings.getBaseURL() + httpCallSettings.getUrlQuery());
 
+		if (_log.isDebugEnabled()) {
+			_log.debug("Input mapping: " + httpCallSettings.getInputMappings());
+		}
+
+		Map<String, Serializable> inputVariables =
+				_httpCallInputMapper.map(
+					httpCallSettings.getInputMappings(), executionContext);
+		
+		String url = _resolveVariables(
+				httpCallSettings.getBaseURL() + httpCallSettings.getUrlQuery(),
+				inputVariables, false);
+		
+		if (_log.isDebugEnabled()) {
+			_log.debug("Input variables: " + inputVariables);
+		}
+
+		URI uri = URI.create(url);
+		
 		if (_log.isDebugEnabled()) {
 			_log.debug("Making HTTP Call: " + uri);
 		}
@@ -96,10 +124,28 @@ public class HTTPCallClientImpl implements HTTPCallClient {
 		if (_log.isDebugEnabled()) {
 			_log.debug("User Token: " + userToken);
 		}
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("Http body (before mapping): " + httpCallSettings.getHttpBody());
+		}
+
+		String httpMethod = httpCallSettings.getHttpMethod();
+		String httpBody = _resolveVariables(
+				httpCallSettings.getHttpBody(), inputVariables, true);
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("Http body (after mapping): " + httpBody);
+		}
+
+		HttpRequest.Builder builder = HttpRequest.newBuilder();
+		if("GET".equals(httpMethod)) {
+			builder = builder.GET();
+		} else if("POST".equals(httpMethod)) {
+			builder = builder.POST(BodyPublishers.ofString(httpBody));
+			builder.header("Content-Type", "application/json");
+		}
 		
-		HttpRequest httpRequest = HttpRequest.newBuilder(
-		).GET(
-		).header(
+		HttpRequest httpRequest = builder.header(
 			"liferay-ai-hub-cell-on-behalf-of", userToken
 		).uri(
 			uri
@@ -126,6 +172,12 @@ public class HTTPCallClientImpl implements HTTPCallClient {
 		if (_log.isDebugEnabled()) {
 			_log.debug("HTTP Call response body: " + responseBody);
 		}
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("HTTP Call output mapping: " + httpCallSettings.getOutputMappings());
+		}
+		
+		_httpCallOutputMapper.map(httpCallSettings.getOutputMappings(), responseBody, executionContext);
 		
 		try {
 
@@ -174,6 +226,28 @@ public class HTTPCallClientImpl implements HTTPCallClient {
 
 		}
 	}	
+	
+	private String _resolveVariables(
+		String value, Map<String, Serializable> variables, boolean escape) {
+
+		if (value == null) {
+			return null;
+		}
+
+		for (Map.Entry<String, Serializable> entry : variables.entrySet()) {
+			if(escape) {
+				value = value.replace(
+						"{{" + entry.getKey() + "}}",
+						_escapeJson(String.valueOf(entry.getValue())));
+			} else {
+				value = value.replace(
+						"{{" + entry.getKey() + "}}",
+						String.valueOf(entry.getValue()));
+			}
+		}
+
+		return value;
+	}
 
 	@Deactivate
 	protected void deactivate() {
@@ -191,6 +265,12 @@ public class HTTPCallClientImpl implements HTTPCallClient {
 	
 	@Reference
 	private KaleoInstanceTokenLocalService _kaleoInstanceTokenLocalService;
+	
+	@Reference
+	private HTTPCallInputMapper _httpCallInputMapper;
+
+	@Reference
+	private HTTPCallOutputMapper _httpCallOutputMapper;
 	
 	@Reference
 	private HTTPCallSettingsResolver _httpCallSettingsResolver;

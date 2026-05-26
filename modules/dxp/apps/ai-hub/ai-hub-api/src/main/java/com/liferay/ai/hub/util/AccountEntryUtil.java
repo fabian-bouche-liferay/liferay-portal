@@ -25,18 +25,20 @@ public class AccountEntryUtil {
 			AccountEntryUserRelLocalServiceUtil.
 				getAccountEntryUserRelsByAccountUserId(userId);
 
-		if (accountEntryUserRels.size() != 2) {
-			return null;
-		}
-
 		for (AccountEntryUserRel accountEntryUserRel : accountEntryUserRels) {
 			AccountEntry accountEntry = accountEntryUserRel.getAccountEntry();
 
-			if (!Objects.equals(
+			if (Objects.equals(
 					accountEntry.getExternalReferenceCode(), "L_AI_HUB")) {
 
-				return accountEntry;
+				continue;
 			}
+
+			if (Objects.equals(accountEntry.getType(), "person")) {
+				continue;
+			}
+
+			return accountEntry;
 		}
 
 		return null;
