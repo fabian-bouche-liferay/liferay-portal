@@ -18,3 +18,5 @@ Import-Package:\
 	*
 -dsannotations-options: inherit
 -fixupmessages: Classes found in the wrong directory: ...;is:=ignore
+
+Web-ContextPath: /ai-hub-impl

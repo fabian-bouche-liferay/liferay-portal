@@ -38,7 +38,7 @@ public class AssistantHandlerUtil {
 		}
 
 		Assistant assistant = aiServices.streamingChatModel(
-			assistantHandlerContext.getVertexAiGeminiStreamingChatModel()
+			assistantHandlerContext.getStreamingChatModel()
 		).maxSequentialToolsInvocations(
 			7
 		).systemMessageProvider(

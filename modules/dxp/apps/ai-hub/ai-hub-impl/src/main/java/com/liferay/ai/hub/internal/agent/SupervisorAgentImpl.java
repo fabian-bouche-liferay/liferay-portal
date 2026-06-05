@@ -71,6 +71,10 @@ public class SupervisorAgentImpl implements SupervisorAgent {
 					PermissionChecker originalPermissionChecker =
 						PermissionThreadLocal.getPermissionChecker();
 
+					_log.warn(
+							"SupervisorAgentImpl is about to create a Vertex AI model",
+							new Exception("Vertex creation trace"));
+					
 					try (VertexAiGeminiChatModel vertexAiGeminiChatModel =
 							VertexAiGeminiUtil.createVertexAiGeminiChatModel(
 								agentContext.getCompanyId())) {
@@ -83,6 +87,12 @@ public class SupervisorAgentImpl implements SupervisorAgent {
 							vertexAiGeminiChatModel);
 					}
 					catch (Exception exception) {
+						
+						if (_log.isWarnEnabled()) {
+							_log.warn(
+								"SupervisorAgentImpl failed to create a Vertex AI model");
+						}
+						
 						_handleException(agentContext, exception);
 					}
 					finally {

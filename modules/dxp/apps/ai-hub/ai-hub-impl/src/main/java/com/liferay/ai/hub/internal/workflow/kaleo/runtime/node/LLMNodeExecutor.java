@@ -8,18 +8,20 @@ package com.liferay.ai.hub.internal.workflow.kaleo.runtime.node;
 import com.liferay.ai.hub.internal.assistant.handler.AssistantHandlerContext;
 import com.liferay.ai.hub.internal.assistant.handler.AssistantHandlerUtil;
 import com.liferay.ai.hub.internal.mcp.tool.provider.MCPToolProviderUtil;
-import com.liferay.ai.hub.internal.model.VertexAiGeminiUtil;
+import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.model.LLMNodeChatModel;
+import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.model.LLMNodeChatModelProvider;
 import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.KaleoLogUtil;
 import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.PromptUtil;
-import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.QuotaUtil;
 import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.RetrievalAugmentorUtil;
 import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.ToolsUtil;
 import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.VariablesUtil;
 import com.liferay.ai.hub.rest.resource.v1_0.util.SseUtil;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
@@ -48,7 +50,6 @@ import com.liferay.portal.workflow.kaleo.service.KaleoNodeSettingLocalService;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.invocation.InvocationParameters;
 import dev.langchain4j.model.chat.response.ChatResponse;
-import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiStreamingChatModel;
 
 import java.io.Serializable;
 
@@ -84,6 +85,8 @@ public class LLMNodeExecutor extends BaseNodeExecutor {
 			KaleoNode currentKaleoNode, ExecutionContext executionContext,
 			List<PathElement> remainingPathElements)
 		throws PortalException {
+		
+		_log.warn("LLMNodeExecutor WebLLM-enabled version is executing");		
 
 		KaleoInstanceToken kaleoInstanceToken =
 			executionContext.getKaleoInstanceToken();
@@ -110,15 +113,10 @@ public class LLMNodeExecutor extends BaseNodeExecutor {
 		Map<String, Serializable> workflowContext =
 			executionContext.getWorkflowContext();
 
-		QuotaUtil.checkUsage(
-			serviceContext.getCompanyId(), currentKaleoNode.getName(),
-			prompt + "\n" + userMessage, workflowContext,
-			kaleoInstanceToken.getKaleoInstanceId(),
-			serviceContext.getUserId());
-
-		VertexAiGeminiStreamingChatModel vertexAiGeminiStreamingChatModel =
-			VertexAiGeminiUtil.createVertexAiGeminiStreamingChatModel(
-				serviceContext.getCompanyId());
+		LLMNodeChatModel llmNodeChatModel = _llmNodeChatModelProvider.create(
+			kaleoNodeSettingValues, serviceContext,
+			currentKaleoNode.getName(), prompt + "\n" + userMessage,
+			workflowContext, kaleoInstanceToken.getKaleoInstanceId());
 
 		AtomicReference<ChatResponse> chatResponseAtomicReference =
 			new AtomicReference<>();
@@ -160,14 +158,14 @@ public class LLMNodeExecutor extends BaseNodeExecutor {
 					finally {
 						MCPToolProviderUtil.close(sseEventSinkKey);
 
-						vertexAiGeminiStreamingChatModel.close();
+						_close(llmNodeChatModel);
 					}
 				}
 			).onErrorConsumer(
 				throwable -> {
 					MCPToolProviderUtil.close(sseEventSinkKey);
 
-					vertexAiGeminiStreamingChatModel.close();
+					_close(llmNodeChatModel);
 
 					_log.error(throwable);
 				}
@@ -178,6 +176,8 @@ public class LLMNodeExecutor extends BaseNodeExecutor {
 					kaleoNodeSettingValues, serviceContext.getLocale(),
 					_objectEntryManager, _searchEngineAdapter,
 					serviceContext.getUserId(), workflowContext)
+			).streamingChatModel(
+				llmNodeChatModel.getStreamingChatModel()
 			).systemMessageProviderFunction(
 				memoryId -> prompt
 			).toolProvider(
@@ -190,8 +190,6 @@ public class LLMNodeExecutor extends BaseNodeExecutor {
 					serviceContext.getUserId(), workflowContext)
 			).userMessage(
 				userMessage
-			).vertexAiGeminiStreamingChatModel(
-				vertexAiGeminiStreamingChatModel
 			).build());
 	}
 
@@ -220,6 +218,15 @@ public class LLMNodeExecutor extends BaseNodeExecutor {
 					executionContext.getServiceContext())));
 	}
 
+	private void _close(LLMNodeChatModel llmNodeChatModel) {
+		try {
+			llmNodeChatModel.close();
+		}
+		catch (Exception exception) {
+			_log.error(exception);
+		}
+	}
+
 	private void _completeResponse(
 		ChatResponse chatResponse, ExecutionContext executionContext,
 		KaleoNode kaleoNode, Map<String, String> kaleoNodeSettingValues,
@@ -234,9 +241,35 @@ public class LLMNodeExecutor extends BaseNodeExecutor {
 			"outputVariables", kaleoNodeSettingValues);
 
 		if ((jsonArray != null) && (jsonArray.length() > 0)) {
-			JSONObject jsonObject = jsonArray.getJSONObject(0);
+			String text = aiMessage.text();
 
-			workflowContext.put(jsonObject.getString("name"), aiMessage.text());
+			workflowContext.put("output", text);
+
+			String jsonText = _normalizeJSONOutput(text);
+
+			try {
+				JSONObject responseJSONObject = _jsonFactory.createJSONObject(
+					jsonText);
+
+				for (int i = 0; i < jsonArray.length(); i++) {
+					JSONObject outputVariableJSONObject =
+						jsonArray.getJSONObject(i);
+
+					String name = outputVariableJSONObject.getString("name");
+
+					if (responseJSONObject.has(name)) {
+						workflowContext.put(
+							name, responseJSONObject.getString(name));
+					}
+				}
+			}
+			catch (JSONException jsonException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						"LLM response is not a JSON object, using raw output",
+						jsonException);
+				}
+			}
 		}
 
 		workflowContext.put("output", aiMessage.text());
@@ -254,9 +287,6 @@ public class LLMNodeExecutor extends BaseNodeExecutor {
 			chatResponse, kaleoInstanceToken, aiMessage.text(), prompt,
 			executionContext.getServiceContext(), userMessage);
 
-		QuotaUtil.updateUsage(
-			chatResponse, executionContext.getServiceContext());
-
 		List<KaleoTransition> kaleoTransitions =
 			kaleoNode.getKaleoTransitions();
 
@@ -272,6 +302,28 @@ public class LLMNodeExecutor extends BaseNodeExecutor {
 		catch (PortalException portalException) {
 			throw new RuntimeException(portalException);
 		}
+	}
+
+	private String _normalizeJSONOutput(String text) {
+		if (text == null) {
+			return StringPool.BLANK;
+		}
+
+		String trimmedText = text.trim();
+
+		if (trimmedText.startsWith("```json")) {
+			trimmedText = trimmedText.substring("```json".length()).trim();
+		}
+		else if (trimmedText.startsWith("```")) {
+			trimmedText = trimmedText.substring("```".length()).trim();
+		}
+
+		if (trimmedText.endsWith("```")) {
+			trimmedText = trimmedText.substring(
+				0, trimmedText.length() - "```".length()).trim();
+		}
+
+		return trimmedText;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -291,6 +343,9 @@ public class LLMNodeExecutor extends BaseNodeExecutor {
 
 	@Reference
 	private KaleoNodeSettingLocalService _kaleoNodeSettingLocalService;
+
+	@Reference
+	private LLMNodeChatModelProvider _llmNodeChatModelProvider;
 
 	@Reference(
 		target = "(object.entry.manager.storage.type=" + ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT + ")"

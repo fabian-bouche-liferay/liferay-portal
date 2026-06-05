@@ -8,10 +8,10 @@ package com.liferay.ai.hub.internal.workflow.kaleo.runtime.node;
 import com.liferay.ai.hub.internal.assistant.handler.AssistantHandlerContext;
 import com.liferay.ai.hub.internal.assistant.handler.AssistantHandlerUtil;
 import com.liferay.ai.hub.internal.mcp.tool.provider.MCPToolProviderUtil;
-import com.liferay.ai.hub.internal.model.VertexAiGeminiUtil;
+import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.model.LLMNodeChatModel;
+import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.model.LLMNodeChatModelProvider;
 import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.KaleoLogUtil;
 import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.PromptUtil;
-import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.QuotaUtil;
 import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.RetrievalAugmentorUtil;
 import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.ToolsUtil;
 import com.liferay.ai.hub.internal.workflow.kaleo.runtime.node.util.VariablesUtil;
@@ -47,7 +47,6 @@ import com.liferay.portal.workflow.kaleo.service.KaleoNodeSettingLocalService;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.invocation.InvocationParameters;
-import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiStreamingChatModel;
 
 import java.io.Serializable;
 
@@ -155,15 +154,10 @@ public class AIDecisionNodeExecutor extends BaseNodeExecutor {
 		Map<String, Serializable> workflowContext =
 			executionContext.getWorkflowContext();
 
-		QuotaUtil.checkUsage(
-			serviceContext.getCompanyId(), currentKaleoNode.getName(),
-			prompt + "\n" + userMessage, workflowContext,
-			kaleoInstanceToken.getKaleoInstanceId(),
-			serviceContext.getUserId());
-
-		VertexAiGeminiStreamingChatModel vertexAiGeminiStreamingChatModel =
-			VertexAiGeminiUtil.createVertexAiGeminiStreamingChatModel(
-				serviceContext.getCompanyId());
+		LLMNodeChatModel llmNodeChatModel = _llmNodeChatModelProvider.create(
+			kaleoNodeSettingValues, serviceContext,
+			currentKaleoNode.getName(), prompt + "\n" + userMessage,
+			workflowContext, kaleoInstanceToken.getKaleoInstanceId());
 
 		String sseEventSinkKey = GetterUtil.getString(
 			workflowContext.get("sseEventSinkKey"));
@@ -183,7 +177,7 @@ public class AIDecisionNodeExecutor extends BaseNodeExecutor {
 				response -> {
 					MCPToolProviderUtil.close(sseEventSinkKey);
 
-					vertexAiGeminiStreamingChatModel.close();
+					_close(llmNodeChatModel);
 
 					KaleoLogUtil.addNodeUsageKaleoLog(
 						response, kaleoInstanceToken,
@@ -191,13 +185,12 @@ public class AIDecisionNodeExecutor extends BaseNodeExecutor {
 						prompt, executionContext.getServiceContext(),
 						userMessage);
 
-					QuotaUtil.updateUsage(response, serviceContext);
 				}
 			).onErrorConsumer(
 				throwable -> {
 					MCPToolProviderUtil.close(sseEventSinkKey);
 
-					vertexAiGeminiStreamingChatModel.close();
+					_close(llmNodeChatModel);
 
 					_log.error(throwable);
 				}
@@ -208,6 +201,8 @@ public class AIDecisionNodeExecutor extends BaseNodeExecutor {
 					kaleoNodeSettingValues, serviceContext.getLocale(),
 					_objectEntryManager, _searchEngineAdapter,
 					serviceContext.getUserId(), workflowContext)
+			).streamingChatModel(
+				llmNodeChatModel.getStreamingChatModel()
 			).systemMessageProviderFunction(
 				memoryId -> prompt
 			).tools(
@@ -222,8 +217,6 @@ public class AIDecisionNodeExecutor extends BaseNodeExecutor {
 					serviceContext.getUserId(), workflowContext)
 			).userMessage(
 				userMessage
-			).vertexAiGeminiStreamingChatModel(
-				vertexAiGeminiStreamingChatModel
 			).build());
 	}
 
@@ -252,6 +245,15 @@ public class AIDecisionNodeExecutor extends BaseNodeExecutor {
 					executionContext.getServiceContext())));
 	}
 
+	private void _close(LLMNodeChatModel llmNodeChatModel) {
+		try {
+			llmNodeChatModel.close();
+		}
+		catch (Exception exception) {
+			_log.error(exception);
+		}
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		AIDecisionNodeExecutor.class);
 
@@ -269,6 +271,9 @@ public class AIDecisionNodeExecutor extends BaseNodeExecutor {
 
 	@Reference
 	private KaleoNodeSettingLocalService _kaleoNodeSettingLocalService;
+
+	@Reference
+	private LLMNodeChatModelProvider _llmNodeChatModelProvider;
 
 	@Reference(
 		target = "(object.entry.manager.storage.type=" + ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT + ")"

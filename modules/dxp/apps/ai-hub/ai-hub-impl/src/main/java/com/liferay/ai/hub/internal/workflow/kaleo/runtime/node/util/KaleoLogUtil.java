@@ -14,7 +14,6 @@ import com.liferay.portal.workflow.kaleo.model.KaleoInstanceToken;
 import com.liferay.portal.workflow.kaleo.service.KaleoLogLocalServiceUtil;
 
 import dev.langchain4j.model.chat.response.ChatResponse;
-import dev.langchain4j.model.chat.response.ChatResponseMetadata;
 import dev.langchain4j.model.output.TokenUsage;
 
 import java.io.Serializable;
@@ -29,18 +28,16 @@ public class KaleoLogUtil {
 		String output, String prompt, ServiceContext serviceContext,
 		String userMessage) {
 
-		ChatResponseMetadata chatResponseMetadata = chatResponse.metadata();
+		TokenUsage tokenUsage = chatResponse.metadata().tokenUsage();
 
-		TokenUsage tokenUsage = chatResponseMetadata.tokenUsage();
+		int inputTokenCount = _getTokenCount(
+			tokenUsage, tokenUsage != null ? tokenUsage.inputTokenCount() : null);
+		int outputTokenCount = _getTokenCount(
+			tokenUsage, tokenUsage != null ? tokenUsage.outputTokenCount() : null);
+		int totalTokenCount = _getTokenCount(
+			tokenUsage, tokenUsage != null ? tokenUsage.totalTokenCount() : null);
 
 		try {
-			int inputTokenCount = tokenUsage.inputTokenCount();
-			int outputTokenCount = tokenUsage.outputTokenCount();
-			int totalTokenCount = tokenUsage.totalTokenCount();
-
-			int thoughtsTokenCount =
-				totalTokenCount - inputTokenCount - outputTokenCount;
-
 			KaleoLogLocalServiceUtil.addNodeUsageMetadataKaleoLog(
 				kaleoInstanceToken,
 				HashMapBuilder.<String, Serializable>put(
@@ -52,7 +49,9 @@ public class KaleoLogUtil {
 				).put(
 					"promptInput", prompt
 				).put(
-					"thoughtsTokenCount", String.valueOf(thoughtsTokenCount)
+					"thoughtsTokenCount",
+					String.valueOf(
+						totalTokenCount - inputTokenCount - outputTokenCount)
 				).put(
 					"totalTokenCount", String.valueOf(totalTokenCount)
 				).put(
@@ -63,6 +62,14 @@ public class KaleoLogUtil {
 		catch (PortalException portalException) {
 			_log.error(portalException);
 		}
+	}
+
+	private static int _getTokenCount(TokenUsage tokenUsage, Integer value) {
+		if ((tokenUsage == null) || (value == null)) {
+			return 0;
+		}
+
+		return value;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(KaleoLogUtil.class);
