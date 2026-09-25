@@ -1,0 +1,18 @@
+.variables-editor-modal {
+	.table {
+		td {
+			vertical-align: top;
+		}
+
+		td,
+		th {
+			&:first-child {
+				padding-left: 0;
+			}
+		}
+	}
+
+	.variables-editor-modal-type {
+		min-width: 8rem;
+	}
+}

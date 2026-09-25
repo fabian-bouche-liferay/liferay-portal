@@ -7,6 +7,8 @@ import {fetch} from 'frontend-js-web';
 
 import {contextUrl} from '../constants';
 
+export const aiHubBaseURL = '/o/ai-hub';
+export const searchExperiencesBaseURL = '/o/search-experiences-rest/v1.0';
 export const userBaseURL = '/o/headless-admin-user/v1.0';
 export const workflowBaseURL = '/o/headless-admin-workflow/v1.0';
 
@@ -50,6 +52,18 @@ export function retrieveAccountRoles(accountId: number) {
 	});
 }
 
+export function retrieveAgentDefinitionByExternalReferenceCode(
+	externalReferenceCode: string
+) {
+	return fetch(
+		`${aiHubBaseURL}/agent-definitions/by-external-reference-code/${encodeURIComponent(externalReferenceCode)}?fields=inputVariables`,
+		{
+			headers: HEADERS,
+			method: 'GET',
+		}
+	);
+}
+
 export function retrieveDefinitionRequest(
 	definitionName: string,
 	versionNumber: number
@@ -66,6 +80,16 @@ export function retrieveDefinitionRequest(
 	});
 }
 
+export function retrieveMCPServers() {
+	return fetch(
+		`${aiHubBaseURL}/mcp-servers?fields=externalReferenceCode,title,url&pageSize=-1`,
+		{
+			headers: HEADERS,
+			method: 'GET',
+		}
+	);
+}
+
 export function retrieveRoleById(roleId: number) {
 	return fetch(
 		`${window.location.origin}${contextUrl}${userBaseURL}/roles/${roleId}`,
@@ -79,6 +103,16 @@ export function retrieveRoleById(roleId: number) {
 export function retrieveRoles() {
 	return fetch(
 		`${window.location.origin}${contextUrl}${userBaseURL}/roles?fields=id,name,roleType&pageSize=-1`,
+		{
+			headers: HEADERS,
+			method: 'GET',
+		}
+	);
+}
+
+export function retrieveSearchableAssetNames(languageId: string) {
+	return fetch(
+		`${searchExperiencesBaseURL}/searchable-asset-names/${languageId}`,
 		{
 			headers: HEADERS,
 			method: 'GET',

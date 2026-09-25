@@ -55,6 +55,7 @@ export default function SidebarHeader({
 		if (
 			(event.key === 'Backspace' || event.key === 'Delete') &&
 			contentName !== 'assignments' &&
+			!document.body.classList.contains('modal-open') &&
 			!document.querySelectorAll('.form-control:focus').length &&
 			!document.querySelectorAll('.CodeMirror-focused').length
 		) {

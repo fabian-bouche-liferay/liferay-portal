@@ -9,7 +9,7 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, {useId, useState} from 'react';
 
-export default function SidebarPanel({children, panelTitle}) {
+export default function SidebarPanel({children, headerActions, panelTitle}) {
 	const [panelCollapsed, setPanelCollapsed] = useState(false);
 
 	const panelBodyId = useId();
@@ -17,19 +17,29 @@ export default function SidebarPanel({children, panelTitle}) {
 	return (
 		<div className="panel-group panel-group-flush">
 			<div className="panel">
-				<ClayButton
-					aria-controls={panelBodyId}
-					aria-expanded={!panelCollapsed}
-					className="sheet-subtitle"
-					displayType="unstyled"
-					onClick={() => setPanelCollapsed(!panelCollapsed)}
-				>
-					<span>{panelTitle}</span>
+				<div className="sidebar-panel-header">
+					<ClayButton
+						aria-controls={panelBodyId}
+						aria-expanded={!panelCollapsed}
+						className="sheet-subtitle"
+						displayType="unstyled"
+						onClick={() => setPanelCollapsed(!panelCollapsed)}
+					>
+						<span>{panelTitle}</span>
 
-					<ClayIcon
-						symbol={panelCollapsed ? 'angle-right' : 'angle-down'}
-					/>
-				</ClayButton>
+						<ClayIcon
+							symbol={
+								panelCollapsed ? 'angle-right' : 'angle-down'
+							}
+						/>
+					</ClayButton>
+
+					{headerActions && (
+						<div className="sidebar-panel-header-actions">
+							{headerActions}
+						</div>
+					)}
+				</div>
 
 				<div
 					className={classNames('panel-collapse', {
@@ -46,5 +56,6 @@ export default function SidebarPanel({children, panelTitle}) {
 
 SidebarPanel.propTypes = {
 	children: PropTypes.any,
+	headerActions: PropTypes.node,
 	panelTitle: PropTypes.string.isRequired,
 };

@@ -3,18 +3,21 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ReactFlowProvider} from 'react-flow-renderer';
 
 import '../../css/definition-builder/main.scss';
 import {DefinitionBuilderContextProvider} from './DefinitionBuilderContext';
 import DiagramBuilder from './diagram-builder/DiagramBuilder';
 import {defaultNodes} from './diagram-builder/components/nodes/utils';
+import {parseAgentInputVariableNames} from './diagram-builder/components/sidebar/sections/prompt/utils';
 import UpperToolbar from './shared/components/toolbar/UpperToolbar';
 import SourceBuilder from './source-builder/SourceBuilder';
+import {retrieveAgentDefinitionByExternalReferenceCode} from './util/fetchUtil';
 
 export default function DefinitionBuilder(props) {
 	const [accountEntryId, setAccountEntryId] = useState(props.accountEntryId);
+	const [agentInputVariableNames, setAgentInputVariableNames] = useState([]);
 	const [active, setActive] = useState(true);
 	const [alertMessage, setAlertMessage] = useState('');
 	const [alertType, setAlertType] = useState(null);
@@ -38,9 +41,35 @@ export default function DefinitionBuilder(props) {
 	const [workflowDefinitionVersions, setWorkflowDefinitionVersions] =
 		useState(props.definitionVersions ? props.definitionVersions : []);
 
+	useEffect(() => {
+		if (!props.agentDefinitionExternalReferenceCode) {
+			return;
+		}
+
+		retrieveAgentDefinitionByExternalReferenceCode(
+			props.agentDefinitionExternalReferenceCode
+		)
+			.then((response) => {
+				if (!response.ok) {
+					throw new Error(response.statusText);
+				}
+
+				return response.json();
+			})
+			.then(({inputVariables}) =>
+				setAgentInputVariableNames(
+					parseAgentInputVariableNames(inputVariables)
+				)
+			)
+			.catch((error) => {
+				console.error(error);
+			});
+	}, [props.agentDefinitionExternalReferenceCode]);
+
 	const contextProps = {
 		accountEntryId,
 		active,
+		agentInputVariableNames,
 		alertMessage,
 		alertType,
 		allowScriptContentToBeExecutedOrIncluded:

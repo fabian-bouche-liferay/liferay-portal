@@ -62,6 +62,30 @@ describe('The SidebarPanel component should', () => {
 		expect(getPanelBody(toggle)).not.toHaveClass('collapse');
 	});
 
+	it('Render the header actions next to the toggle button', async () => {
+		const onClick = jest.fn();
+		const user = userEvent.setup();
+
+		render(
+			<SidebarPanel
+				headerActions={<button onClick={onClick}>action</button>}
+				panelTitle="information"
+			>
+				<p>panel body</p>
+			</SidebarPanel>
+		);
+
+		const toggle = screen.getByRole('button', {name: 'information'});
+
+		await user.click(screen.getByRole('button', {name: 'action'}));
+
+		expect(onClick).toHaveBeenCalled();
+		expect(toggle).toHaveAttribute('aria-expanded', 'true');
+		expect(toggle).not.toContainElement(
+			screen.getByRole('button', {name: 'action'})
+		);
+	});
+
 	it('Render the title as an expanded toggle button that controls the panel body', () => {
 		render(
 			<SidebarPanel panelTitle="information">

@@ -4,19 +4,38 @@
  */
 
 import ClayForm, {ClayInput, ClaySelect} from '@clayui/form';
-import React, {useContext} from 'react';
+import {sub} from 'frontend-js-web';
+import React, {useContext, useState} from 'react';
 
+import {DefinitionBuilderContext} from '../../../../../DefinitionBuilderContext';
+import {defaultLanguageId} from '../../../../../constants';
 import {DiagramBuilderContext} from '../../../../DiagramBuilderContext';
 import SidebarPanel from '../../SidebarPanel';
+import {getAvailableVariableGroups} from '../prompt/utils';
+import OpenEditorButton from '../shared-components/OpenEditorButton';
 import {getUpdatedDataItem} from '../utils';
-
-const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+import HTTPRequestEditorModal from './HTTPRequestEditorModal';
+import {HTTP_METHODS} from './utils';
 
 const HTTPEndpoint = () => {
+	const {agentInputVariableNames, elements} = useContext(
+		DefinitionBuilderContext
+	);
 	const {selectedItem, setSelectedItem} = useContext(DiagramBuilderContext);
 
+	const [showHTTPRequestEditorModal, setShowHTTPRequestEditorModal] =
+		useState(false);
+
 	return (
-		<SidebarPanel panelTitle={Liferay.Language.get('http-endpoint')}>
+		<SidebarPanel
+			headerActions={
+				<OpenEditorButton
+					label={Liferay.Language.get('http-request')}
+					onClick={() => setShowHTTPRequestEditorModal(true)}
+				/>
+			}
+			panelTitle={Liferay.Language.get('http-endpoint')}
+		>
 			<ClayForm.Group>
 				<label htmlFor="httpMethod">
 					{Liferay.Language.get('http-method')}
@@ -62,6 +81,39 @@ const HTTPEndpoint = () => {
 					value={selectedItem?.data.url ?? ''}
 				/>
 			</ClayForm.Group>
+
+			{showHTTPRequestEditorModal && (
+				<HTTPRequestEditorModal
+					initialHTTPMethod={selectedItem?.data.httpMethod}
+					initialInputVariables={selectedItem?.data.inputVariables}
+					initialRequestBody={selectedItem?.data.requestBody}
+					initialURL={selectedItem?.data.url}
+					onApply={({httpMethod, inputVariables, requestBody, url}) =>
+						setSelectedItem((previousSelectedItem) => ({
+							...previousSelectedItem,
+							data: {
+								...previousSelectedItem.data,
+								httpMethod,
+								inputVariables,
+								requestBody,
+								url,
+							},
+						}))
+					}
+					onClose={() => setShowHTTPRequestEditorModal(false)}
+					subtitle={selectedItem?.data.label?.[defaultLanguageId]}
+					title={sub(
+						Liferay.Language.get('edit-x'),
+						Liferay.Language.get('http-request')
+					)}
+					variableGroups={getAvailableVariableGroups({
+						agentInputVariableNames,
+						elements,
+						inputVariables: selectedItem?.data.inputVariables,
+						selectedItemId: selectedItem?.id,
+					})}
+				/>
+			)}
 		</SidebarPanel>
 	);
 };

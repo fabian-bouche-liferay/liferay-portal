@@ -34,6 +34,8 @@ renderResponse.setTitle(LanguageUtil.get(request, titleKey));
 		HashMapBuilder.<String, Object>put(
 			"accountEntryId", ParamUtil.getLong(liferayPortletRequest, "accountEntryId")
 		).put(
+			"agentDefinitionExternalReferenceCode", ParamUtil.getString(liferayPortletRequest, "agentDefinitionExternalReferenceCode")
+		).put(
 			"allowScriptContentToBeExecutedOrIncluded", kaleoDesignerDisplayContext.isAllowScriptContentToBeExecutedOrIncluded()
 		).put(
 			"definitionName", (currentKaleoDefinitionVersion == null) ? null : currentKaleoDefinitionVersion.getName()

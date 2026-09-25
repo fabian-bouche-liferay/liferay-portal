@@ -1,0 +1,17 @@
+.editor-modal-icon {
+	align-items: center;
+	background-color: $primary-l3;
+	border-radius: $border-radius;
+	color: $primary;
+	display: inline-flex;
+	height: 2.5rem;
+	justify-content: center;
+	margin-right: 0.5rem;
+	width: 2.5rem;
+}
+
+.insert-variable-drop-down-item {
+	display: flex;
+	gap: 1rem;
+	justify-content: space-between;
+}

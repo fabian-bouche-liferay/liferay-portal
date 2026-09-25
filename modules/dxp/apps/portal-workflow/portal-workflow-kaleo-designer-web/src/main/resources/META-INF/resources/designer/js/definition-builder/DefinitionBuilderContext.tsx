@@ -9,6 +9,7 @@ import {Elements} from 'react-flow-renderer';
 interface DefinitionBuilderContextProviderProps {
 	accountEntryId: string;
 	active: boolean;
+	agentInputVariableNames: string[];
 	alertMessage: string;
 	alertType: string | null;
 	allowScriptContentToBeExecutedOrIncluded: boolean;

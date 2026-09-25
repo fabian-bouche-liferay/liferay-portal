@@ -75,6 +75,28 @@
 			width: 100%;
 		}
 
+		.sidebar-field-header {
+			align-items: center;
+			display: flex;
+			justify-content: space-between;
+			margin-bottom: 0.25rem;
+
+			label {
+				margin-bottom: 0;
+			}
+		}
+
+		.sidebar-panel-header {
+			position: relative;
+
+			.sidebar-panel-header-actions {
+				position: absolute;
+				right: 1.5rem;
+				top: 50%;
+				transform: translateY(-50%);
+			}
+		}
+
 		.recipient-type-form-group {
 			margin-bottom: 0.5rem;
 		}

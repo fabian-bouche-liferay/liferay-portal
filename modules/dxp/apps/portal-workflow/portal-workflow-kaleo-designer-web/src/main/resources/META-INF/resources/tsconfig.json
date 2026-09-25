@@ -1,5 +1,5 @@
 {
-	"@generated": "627a64924ad447a0963aa706b347e48ba4b33a34",
+	"@generated": "59a09a8a75f750ea557d98e5e4b25c459159e106",
 	"@readonly": "** AUTO-GENERATED: DO NOT EDIT **",
 	"compilerOptions": {
 		"allowSyntheticDefaultImports": true,
@@ -11,6 +11,9 @@
 		"module": "es2022",
 		"moduleResolution": "node",
 		"paths": {
+			"@liferay/frontend-js-codemirror-web": [
+				"../../../../../../../../../apps/frontend-js/frontend-js-codemirror-web/src/main/resources/META-INF/resources/js/index.ts"
+			],
 			"@liferay/object-js-components-web": [
 				"../../../../../../../../../apps/object/object-js-components-web/src/main/resources/META-INF/resources/index.ts"
 			],
@@ -43,6 +46,9 @@
 		"../../../../../../../../../global.d.ts"
 	],
 	"references": [
+		{
+			"path": "../../../../../../../../../apps/frontend-js/frontend-js-codemirror-web/src/main/resources/META-INF/resources/tsconfig.json"
+		},
 		{
 			"path": "../../../../../../../../../apps/object/object-js-components-web/src/main/resources/META-INF/resources/tsconfig.json"
 		},
